@@ -5,7 +5,9 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 n_trees = 20000
-vals = np.sort(np.random.uniform(0.20, 0.8, size=(n_trees, 2)).round(3))
+# birth_rates = np.random.uniform(0.4, 1, size=n_trees)
+# death_rates = np.random.uniform(0, birth_rates, size=n_trees)
+vals = np.random.uniform(0.0, 1.0, size=(n_trees, 2)).round(3)
 
 # setup
 venv_bin = Path(
@@ -13,7 +15,7 @@ venv_bin = Path(
 )
 generate_bd = venv_bin / "generate_bd"
 
-max_workers = 10
+max_workers = 8
 
 
 def generate_tree(i, la, psi, out_dir=Path("./output_trees"), timeout_seconds=5):
@@ -29,7 +31,7 @@ def generate_tree(i, la, psi, out_dir=Path("./output_trees"), timeout_seconds=5)
             [
                 str(generate_bd),
                 "--min_tips",
-                "100",
+                "10",
                 "--max_tips",
                 "500",
                 "--la",
@@ -58,10 +60,13 @@ def generate_tree(i, la, psi, out_dir=Path("./output_trees"), timeout_seconds=5)
 output_paths = []
 with ThreadPoolExecutor(max_workers=max_workers) as ex:
     futures = []
+    output_dir = Path("./output_trees")
     for i, row in enumerate(vals):
-        # la, psi = row
-        psi, la = row
-        futures.append(ex.submit(generate_tree, i, la, psi))
+        if (output_dir / f"tree_{i}.nwk").exists():
+            continue
+        else:
+            la, psi = row
+            futures.append(ex.submit(generate_tree, i, la, psi, out_dir=output_dir))
     for fut in tqdm(
         as_completed(futures),
         total=len(futures),
