@@ -4,7 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-n_trees = 1000
+n_trees = 20000
 vals = np.sort(np.random.uniform(0.20, 0.8, size=(n_trees, 2)).round(3))
 
 # setup
@@ -20,6 +20,9 @@ def generate_tree(i, la, psi, out_dir=Path("./output_trees"), timeout_seconds=5)
     out_dir.mkdir(exist_ok=True, parents=True)
     tree_path = out_dir / f"tree_{i}.nwk"
     log_path = out_dir / f"params_{i}.csv"
+
+    if tree_path.exists():
+        return None
 
     try:
         subprocess.run(
